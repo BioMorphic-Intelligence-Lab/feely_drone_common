@@ -1,0 +1,10 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "feely_drone_common"
+version = "0.1.0"
+description = "Common Implementations for the Feely Drone project"
+authors = [{ name = "Anton Bredenbeck" }]
+dependencies = ["numpy", "matplotlib"]
