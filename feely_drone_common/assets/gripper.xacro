@@ -86,7 +86,7 @@
 
     <joint name="base_joint" type="continuous">
         <parent link="p3" />
-        <child link="base" />
+        <child link="drone" />
         <axis xyz="0 0 1"/>
         <dynamics damping="100.0" friction="0.0"/>
     </joint>

@@ -1,7 +1,5 @@
 import numpy as np
 from enum import Enum
-from .pose_ctrl import PoseCtrl
-from .gripper_ctrl import GripperCtrl
 from .search_pattern import (LinearSearchPattern,
                              SinusoidalSearchPattern,
                              CompositeSearchPattern)
@@ -16,18 +14,18 @@ class State(Enum):
     FINALIZE = 6
     PERCH = 7
     ABORT = 8
+    TAKEOFF = 9
 
 class StateMachine(object):
 
     def __init__(self,
                  dt, m_arm, l_arm, K, A, g, q0, 
                  p0, rot0,
-                 m_total,
                  searching_pattern=None,
                  target_pos_estimate=np.array([0, 0, 0.5]),
                  target_yaw_estimate=np.zeros(1),
-                 tau_max=1500 * np.ones(3),
-                 alpha_rate=1.0/5.0):
+                 alpha_rate=1.0/10.0,
+                 takeoff_position=np.array([0, 0, 1.5])):
 
         if searching_pattern is None:
             self.searching_pattern = (CompositeSearchPattern([
@@ -49,12 +47,10 @@ class StateMachine(object):
         self.target_pos_estimate = target_pos_estimate
         self.alpha_rate = alpha_rate
         self.alpha = np.ones(3)
-        self.state = State.SEARCHING      
+        self.state = State.TAKEOFF
+        self.takeoff_position = takeoff_position   
         
         self.tactile_info_sw = np.zeros([10, 3, 3], dtype=float)
-
-        self.pose_ctrl = PoseCtrl(m_total=m_total, dt=dt, g=g)
-        self.gripper_ctrl = GripperCtrl(tau_max=tau_max)
 
         self.p0 = p0
         self.rot0 = rot0
@@ -76,33 +72,57 @@ class StateMachine(object):
 
     def reset(self):
 
-        self.t=0
+        self.t = 0
         self.target_pos_estimate = self.init_target_pos_estimate.copy()
         self.target_yaw_estimate = self.init_target_yaw_estimate.copy()
         self.alpha = np.ones(3)
-        self.state = State.SEARCHING   
+        self.state = State.TAKEOFF  
         self.searching_pattern.reset()
 
         self.tactile_info_sw = np.zeros([10, 3, 3], dtype=float)
-        self.pose_ctrl.reset()
-        self.gripper_ctrl.reset()
-
+        
         self.reference_pos = np.zeros(3)
         self.contact_locs = self.forward_kinematics(np.zeros(4), np.reshape([self.q0] * 3, [3,3]))
 
         self.tau_min=-1
 
-
-    def get_des_yaw_vel(self, contacts, rot_vel=1.0):
+    def get_des_yaw_vel(self, contacts, rot_vel=0.2):
         rows = np.sum(np.array([1.0, 3.0, 2.0]) * contacts, axis=1)
-        if rows[0] == rows[2]:
+        #if rows[0] == rows[2]:
+        #    return 0.0
+        #elif rows[0] > rows[2]:
+        #    return -rot_vel
+        #elif rows[2] > rows[0]:
+        #    return rot_vel
+        #else:
+        #    return 0.0
+        if rows[1] == rows[0]:
             return 0.0
-        elif rows[0] > rows[2]:
+        elif rows[1] > rows[0]:
             return -rot_vel
-        elif rows[2] > rows[0]:
+        elif rows[0] > rows[1]:
             return rot_vel
         else:
             return 0.0
+
+    def takeoff_control(self, x, v, contact):
+        """
+        Control for takeoff state.
+        This is a placeholder and should be implemented based on the specific requirements of the takeoff procedure.
+        """
+        yaw_des = self.target_yaw_estimate
+        p_des = self.takeoff_position
+        dist = self.takeoff_position - x[:3]
+        
+        if np.linalg.norm(dist) < 0.25:
+            v_des = np.zeros(4)  # Stop when close enough
+        else:
+            v_des = 0.5 * np.append(dist, 0)  # No yawrate control during takeoff
+
+        return {'alpha': self.alpha,
+                'p_des': p_des,
+                'v_des': v_des,
+                'yaw_des': yaw_des}
 
     def searching_position_control(self, x, v, contact):
 
@@ -112,23 +132,23 @@ class StateMachine(object):
         # Extract new desired control values
         p_des, v_des, self.tau_min = self.searching_pattern.get_ref_pos_vel(x=x[:3], last_tau=self.tau_min)
 
+        # Append zero to v_des for yaw control
+        v_des = np.append(v_des, 0.0)
+
+        # Sinusoidal pattern in opening and closing the gripper
+        self.alpha = (1 - (0.25 * np.sin(2*np.pi / 10.0 * self.t) + 0.25)) * np.ones(3)
+
         if self.tau_min >= 0.99:
             self.searching_pattern.step_height(0.075)
             self.target_pos_estimate[2] += 0.1
             self.tau_min = -1
 
         yaw_des = self.target_yaw_estimate
-        tau = self.gripper_ctrl.open_to(self.alpha)
         
-        # Find control actions
-        pos_ctrl = self.pose_ctrl.pos_ctrl(p_des, x[:3], v_des, v[:3])
-        yaw_ctrl = self.pose_ctrl.yaw_ctrl(yaw_des, x[3], 0.0, v[3])
-
         # Return control actions
-        return {'pos_ctrl': pos_ctrl,
-                'yaw_ctrl': yaw_ctrl,
-                'tau': tau,
+        return {'alpha': self.alpha,
                 'p_des': p_des,
+                'v_des': v_des,
                 'yaw_des': yaw_des}
 
     def position_align_control(self, x, v, contact, p_des=None):
@@ -138,15 +158,11 @@ class StateMachine(object):
             p_des = self.target_pos_estimate
         yaw_des = self.target_yaw_estimate
 
-        pos_ctrl = self.pose_ctrl.pos_ctrl(p_des, x[:3], 0.0, v[:3])
-        yaw_ctrl = self.pose_ctrl.yaw_ctrl(yaw_des, x[3], 0.0, v[3])
-
-        tau = self.gripper_ctrl.open_to(self.alpha)
+        v_des = np.zeros(4)        
         
-        return {'pos_ctrl': pos_ctrl,
-                'yaw_ctrl': yaw_ctrl,
-                'tau': tau,
+        return {'alpha': self.alpha,
                 'p_des': p_des,
+                'v_des': v_des,
                 'yaw_des': yaw_des}
     
     def abort_control(self, x, v, contact):
@@ -155,16 +171,12 @@ class StateMachine(object):
         p_des = self.target_pos_estimate
         yaw_des = self.target_yaw_estimate
         
-        pos_ctrl = self.pose_ctrl.pos_ctrl(p_des, x[:3], 0.0, v[:3])
-        yaw_ctrl = self.pose_ctrl.yaw_ctrl(yaw_des, x[3], 0.0, v[3])
-
         self.alpha = np.ones(3)
-        tau = self.gripper_ctrl.open_to(self.alpha)
+        v_des = np.zeros(4)
         
-        return {'pos_ctrl': pos_ctrl,
-                'yaw_ctrl': yaw_ctrl,
-                'tau': tau,
+        return {'alpha': self.alpha,
                 'p_des': p_des,
+                'v_des': v_des,
                 'yaw_des': yaw_des}
 
     def position_fine_alignment(self, contact, del_p=0.01):
@@ -180,15 +192,13 @@ class StateMachine(object):
 
     def rotation_align_control(self, x, v, contact):
         
-        
-
         omega_des = self.get_des_yaw_vel(contact)
         self.target_yaw_estimate += self.dt * omega_des
         
         yaw_des = self.target_yaw_estimate
 
         cT = np.cos(x[3])
-        sT = np.sin(x[4])
+        sT = np.sin(x[3])
 
         rot = np.array([[cT, -sT, 0],
                         [sT,  cT, 0],
@@ -204,34 +214,26 @@ class StateMachine(object):
         indeces = ~contact.any(axis=1)
         self.alpha[indeces] += dalpha[indeces]
         self.alpha = np.clip(self.alpha, a_min=0.0, a_max=1.0)
-        tau = self.gripper_ctrl.open_to(self.alpha)
+        
+        v_des = np.zeros(4)
+        v_des[3] = omega_des
 
-        pos_ctrl = self.pose_ctrl.pos_ctrl(p_des, x[:3], 0.0, v[:3])
-        yaw_ctrl = self.pose_ctrl.yaw_ctrl(yaw_des, x[3], omega_des, v[3])
-
-        return {'pos_ctrl': pos_ctrl,
-                'yaw_ctrl': yaw_ctrl,
-                'tau': tau,
+        return {'alpha': self.alpha,
                 'p_des': p_des,
+                'v_des': v_des,
                 'yaw_des': yaw_des}
 
     def finalize_grasp_control(self, x, v, contact):
             
-        
-
         p_des = self.target_pos_estimate
         yaw_des = self.target_yaw_estimate
 
         self.alpha = np.ones(3) * np.min(self.alpha)
-        tau = self.gripper_ctrl.open_to(self.alpha)
+        v_des = np.zeros(4)
         
-        pos_ctrl = self.pose_ctrl.pos_ctrl(p_des, x[:3], 0.0, v[:3])
-        yaw_ctrl = self.pose_ctrl.yaw_ctrl(yaw_des, x[3], 0.0, v[3])
-
-        return {'pos_ctrl': pos_ctrl,
-                'yaw_ctrl': yaw_ctrl,
-                'tau': tau,
+        return {'alpha': self.alpha,
                 'p_des': p_des,
+                'v_des': v_des,
                 'yaw_des': yaw_des}
     
     def perch_control(self, x, v, contact):
@@ -242,18 +244,16 @@ class StateMachine(object):
         yaw_des = self.target_yaw_estimate
 
         self.alpha = np.ones(3) * np.min(self.alpha)
-        tau = self.gripper_ctrl.open_to(self.alpha)
+        v_des = np.zeros(4)
+        v_des[3] = omega_des
         
-        pos_ctrl = np.zeros(3)
-        yaw_ctrl = np.zeros(1)
-
-        return {'pos_ctrl': pos_ctrl,
-                'yaw_ctrl': yaw_ctrl,
-                'tau': tau,
+        
+        return {'alpha': self.alpha,
                 'p_des': p_des,
+                'v_des': v_des,
                 'yaw_des': yaw_des}
     
-    def compute_gravity_tau(self, q,):
+    def compute_gravity_tau(self, q):
         """ Compute gravity torques tau(q) """
         C = np.array([np.cos(q[0]), np.cos(q[0] + q[1]), np.cos(q[0] + q[1] + q[2])])
         return np.linalg.norm(self.g) * self.M_g @ C
@@ -285,10 +285,9 @@ class StateMachine(object):
 
         return q
     
-    def find_steady_state_config(self, tau):
-        config = self.newton_solve(tau[0])
+    def find_steady_state_config(self, alpha):
+        config = self.newton_solve(alpha)
         return config
-
 
     def forward_kinematics(self, p, joint_angles):
         """
@@ -339,7 +338,7 @@ class StateMachine(object):
 
     def get_contact_sensor_location(self, p):
 
-        config = self.find_steady_state_config(self.gripper_ctrl.open_to(self.alpha))
+        config = self.find_steady_state_config(self.alpha)
         config = np.reshape([config] * 3, [3,3])
         locs = self.forward_kinematics(p, config)
 
@@ -359,7 +358,6 @@ class StateMachine(object):
 
         return ref_pos / cntc_pts   
 
-
     def update_tactile_info_sw(self, contact):
         self.tactile_info_sw = np.roll(self.tactile_info_sw, shift=-1, axis=0)
         self.tactile_info_sw[-1] = contact
@@ -368,7 +366,13 @@ class StateMachine(object):
 
     def control(self, x, v, contact):
 
-        if self.state == State.SEARCHING:
+        if self.state == State.TAKEOFF:
+            ctrl = self.takeoff_control(x, v, contact)
+            self.reference_pos = ctrl["p_des"]  
+            if np.linalg.norm(x[:3] - self.reference_pos) < 0.05:
+                self.state = State.SEARCHING
+                print("STATE CHANGE: TAKEOFF -> SEARCHING")
+        elif self.state == State.SEARCHING:
             ctrl = self.searching_position_control(x, v, contact)
             self.reference_pos = ctrl["p_des"]  
             if contact.any():
@@ -377,10 +381,12 @@ class StateMachine(object):
                 self.state = State.TOUCHED
                 print("STATE CHANGE: SEARCHING -> TOUCHED")
         elif self.state == State.TOUCHED:
+            # Fully open the gripper if the touch happened
+            self.alpha = np.ones(3)
             ctrl = self.position_align_control(x, v, contact, self.reference_pos)
             if np.linalg.norm(x[:3] - self.reference_pos) < 0.05:
                 self.state = State.APPROACH
-                self.reference_pos = self.target_pos_estimate - np.array([0, 0, 0.1])
+                self.reference_pos = self.target_pos_estimate - np.array([0, 0, 0.2])
                 print("STATE CHANGE: TOUCHED -> APPROACH")
         elif self.state == State.APPROACH:
             ctrl = self.position_align_control(x, v, contact, self.reference_pos)
@@ -438,7 +444,8 @@ class StateMachine(object):
                 print("STATE CHANGE: ABORT -> SEARCHING")
         else:
             ctrl = self.position_align_control(x, v, contact)
-        
+    
+        self.t += self.dt
         self.contact_locs = self.get_contact_sensor_location(x[:4])
 
         return ctrl

@@ -8,6 +8,7 @@ setup(
         "numpy",         
         "matplotlib"
     ],
+    include_package_data=True,  # Include package data files
     package_data={
         "feely_drone_common": ["assets/*.urdf"],  # Include these files
     },

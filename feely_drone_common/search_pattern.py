@@ -123,8 +123,8 @@ class SearchPattern(ABC):
         return p_des, v_des, tau_min
 
 class LinearSearchPattern(SearchPattern):
-    def __init__(self, params):
-        super().__init__(params)
+    def __init__(self, params, vel_norm=1.0, dt=0.01):
+        super().__init__(params, vel_norm=vel_norm, dt=dt)
         # params[0, :] Slope; params[1, :] Offset
 
     def f(self, tau):
@@ -137,8 +137,8 @@ class LinearSearchPattern(SearchPattern):
         return 0
 
 class SinusoidalSearchPattern(SearchPattern):
-    def __init__(self, params):
-        super().__init__(params)
+    def __init__(self, params, vel_norm=1.0, dt=0.01):
+        super().__init__(params, vel_norm=vel_norm, dt=dt)
 
     def f(self, tau):
         return (self.params[3, :]
@@ -155,9 +155,9 @@ class SinusoidalSearchPattern(SearchPattern):
                                           + self.params[2, :]))
 
 class CompositeSearchPattern(SearchPattern):
-    def __init__(self, patterns):
+    def __init__(self, patterns, vel_norm=1.0, dt=0.01):
         self.patterns = patterns
-        super().__init__(np.zeros([1, 3]))
+        super().__init__(np.zeros([1, 3]), vel_norm=vel_norm, dt=dt)
 
     def f(self, tau):
         pos = np.zeros(3)

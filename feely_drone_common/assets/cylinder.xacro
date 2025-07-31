@@ -3,7 +3,7 @@
 
     <xacro:property name="sqrt2" value="1.41421356237" />
 
-    <xacro:property name="radius" value="0.125" />
+    <xacro:property name="radius" value="0.05" />
     <xacro:property name="length" value="${5 * sqrt2}" />
     <xacro:property name="m" value="1" />
 
