@@ -27,7 +27,7 @@
   </link>
   <link name="arm1_link2">
     <visual>
-      <origin rpy="0 1.5707963267948966 0" xyz="-0.006999999999999999 0 0.02"/>
+      <origin rpy="0 1.5707963267948966 0" xyz="0.004 0 0.02"/>
       <geometry>
         <mesh filename="./meshes/MiddlePhalang.dae"/>
       </geometry>
@@ -46,7 +46,7 @@
   </link>
   <link name="arm1_link3">
     <visual>
-      <origin rpy="0 1.5707963267948966 1.5707963267948966" xyz="0.0026 -0.0082 0.01125"/>
+      <origin rpy="0 1.5707963267948966 -1.5707963267948966" xyz="-0.0026 0.0082 0.01125"/>
       <geometry>
         <mesh filename="./meshes/DistalPhalang.dae"/>
       </geometry>
@@ -107,7 +107,7 @@
   </link>
   <link name="arm2_link2">
     <visual>
-      <origin rpy="0 1.5707963267948966 0" xyz="-0.006999999999999999 0 0.02"/>
+      <origin rpy="0 1.5707963267948966 0" xyz="0.004 0 0.02"/>
       <geometry>
         <mesh filename="./meshes/MiddlePhalang.dae"/>
       </geometry>
@@ -126,7 +126,7 @@
   </link>
   <link name="arm2_link3">
     <visual>
-      <origin rpy="0 1.5707963267948966 1.5707963267948966" xyz="0.0026 -0.0082 0.01125"/>
+      <origin rpy="0 1.5707963267948966 -1.5707963267948966" xyz="-0.0026 0.0082 0.01125"/>
       <geometry>
         <mesh filename="./meshes/DistalPhalang.dae"/>
       </geometry>
@@ -187,7 +187,7 @@
   </link>
   <link name="arm3_link2">
     <visual>
-      <origin rpy="0 1.5707963267948966 0" xyz="-0.006999999999999999 0 0.02"/>
+      <origin rpy="0 1.5707963267948966 0" xyz="0.004 0 0.02"/>
       <geometry>
         <mesh filename="./meshes/MiddlePhalang.dae"/>
       </geometry>
@@ -206,7 +206,7 @@
   </link>
   <link name="arm3_link3">
     <visual>
-      <origin rpy="0 1.5707963267948966 1.5707963267948966" xyz="0.0026 -0.0082 0.01125"/>
+      <origin rpy="0 1.5707963267948966 -1.5707963267948966" xyz="-0.0026 0.0082 0.01125"/>
       <geometry>
         <mesh filename="./meshes/DistalPhalang.dae"/>
       </geometry>
