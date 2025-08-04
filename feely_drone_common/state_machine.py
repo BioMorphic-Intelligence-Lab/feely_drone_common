@@ -3,6 +3,7 @@ from enum import Enum
 from .search_pattern import (LinearSearchPattern,
                              SinusoidalSearchPattern,
                              CompositeSearchPattern)
+from .steady_state_calculator import get_contact_sensor_location, forward_kinematics
 
 class State(Enum):
     UNDEFINED = 0
@@ -66,7 +67,9 @@ class StateMachine(object):
         ])
 
         self.reference_pos = np.zeros(3)
-        self.contact_locs = self.forward_kinematics(np.zeros(4), np.reshape([q0] * 3, [3,3]))
+        self.contact_locs = forward_kinematics(p=np.zeros(4), 
+                                               joint_angles=np.reshape([q0] * 3, [3,3]),
+                                               p0=p0, rot0=rot0, l=l_arm)
 
         self.tau_min=-1
 
@@ -82,7 +85,9 @@ class StateMachine(object):
         self.tactile_info_sw = np.zeros([10, 3, 3], dtype=float)
         
         self.reference_pos = np.zeros(3)
-        self.contact_locs = self.forward_kinematics(np.zeros(4), np.reshape([self.q0] * 3, [3,3]))
+        self.contact_locs = forward_kinematics(p=np.zeros(4), 
+                                               joint_angles=np.reshape([self.q0] * 3, [3,3]),
+                                               p0=self.p0, rot0=self.rot0, l=self.l)
 
         self.tau_min=-1
 
@@ -253,100 +258,16 @@ class StateMachine(object):
                 'v_des': v_des,
                 'yaw_des': yaw_des}
     
-    def compute_gravity_tau(self, q):
-        """ Compute gravity torques tau(q) """
-        C = np.array([np.cos(q[0]), np.cos(q[0] + q[1]), np.cos(q[0] + q[1] + q[2])])
-        return np.linalg.norm(self.g) * self.M_g @ C
-
-    def compute_jacobian(self, q):
-        """ Compute Jacobian J_g(q) """
-        S = np.array([
-            [np.sin(q[0]), np.sin(q[0] + q[1]), np.sin(q[0] + q[1] + q[2])],
-            [0, np.sin(q[0] + q[1]), np.sin(q[0] + q[1] + q[2])],
-            [0, 0, np.sin(q[0] + q[1] + q[2])]
-        ])
-        J_tau = -np.linalg.norm(self.g) * self.M_g @ S
-        return J_tau + self.K
-
-    def newton_solve(self, tau_act, tol=1e-6, max_iter=100):
-        """ Solve g(q) = 0 using Newton's method """
-        q = np.zeros(3)
-
-        for i in range(max_iter):
-            tau = self.compute_gravity_tau(q)
-            g_q = tau + self.K @ (q - self.q0) - self.A * tau_act
-
-            if np.linalg.norm(g_q) < tol:
-                return q
-
-            J_g = self.compute_jacobian(q)
-            delta_q = np.linalg.solve(J_g, -g_q)
-            q += delta_q
-
-        return q
-    
-    def find_steady_state_config(self, alpha):
-        config = self.newton_solve(alpha)
-        return config
-
-    def forward_kinematics(self, p, joint_angles):
-        """
-        Computes the forward kinematics for a system with 3 arms, each with 3 links.
-        
-        Args:
-           p: np.array (4), xyz and yaw [rad] position of base
-           joint_angles: np.array (3,3), joint angles [arm, link].
-
-        Returns:
-            positions: np.array (3,3,3), containing XYZ positions of link centers.
-        """
-        positions = np.zeros((3, 3, 3))
-
-        for i in range(3):  # Iterate over arms
-            
-            cT, sT = np.cos(p[3]), np.sin(p[3])
-            R_prev = np.array([
-                [cT, -sT, 0],
-                [sT,  cT, 0],
-                [0,    0, 1]
-            ])               # Start with base rotation
-            p_prev = p[:3] + R_prev @ self.p0[i, :]   # Start with base position
-            R_prev = R_prev @ self.rot0[i, :, :] # Add arm rotation
-            
-            for j in range(3):  # Iterate over links
-                # Joint rotation (assuming rotation around Z-axis for simplicity)
-                cT, sT = np.cos(joint_angles[i, j]), np.sin(joint_angles[i, j])
-                R_joint = np.array([
-                    [1,  0,   0],
-                    [0, cT, -sT],
-                    [0, sT,  cT]
-                ])
-                # Compute current rotation
-                R_current = R_prev @ R_joint
-                
-                # Compute current position
-                p_current = p_prev + R_prev @ np.array([0, 0, self.l[j]])
-                
-                # Store the position
-                positions[i, j] = p_current #- R_prev @ np.array([self.l[j] / 2, 0, 0])
-                
-                # Update for next iteration
-                R_prev = R_current
-                p_prev = p_current
-
-        return positions
-
-    def get_contact_sensor_location(self, p):
-
-        config = self.find_steady_state_config(self.alpha)
-        config = np.reshape([config] * 3, [3,3])
-        locs = self.forward_kinematics(p, config)
-
-        return locs
-
     def get_new_ref_pos(self, x, contact):     
 
-        cntc_sens_loc = self.get_contact_sensor_location(x[:4])
+        cntc_sens_loc = get_contact_sensor_location(x[:4],
+                                                    alpha=self.alpha,
+                                                    M_g=self.M_g,
+                                                    K=self.K,
+                                                    A=self.A,
+                                                    p0=self.p0,
+                                                    rot0=self.rot0,
+                                                    l=self.l)
         
         ref_pos = np.zeros(3, dtype=float)
         cntc_pts = 0.0
@@ -446,6 +367,13 @@ class StateMachine(object):
             ctrl = self.position_align_control(x, v, contact)
     
         self.t += self.dt
-        self.contact_locs = self.get_contact_sensor_location(x[:4])
+        self.contact_locs = get_contact_sensor_location(x[:4],
+                                                    alpha=self.alpha,
+                                                    M_g=self.M_g,
+                                                    K=self.K,
+                                                    A=self.A,
+                                                    p0=self.p0,
+                                                    rot0=self.rot0,
+                                                    l=self.l)
 
         return ctrl
