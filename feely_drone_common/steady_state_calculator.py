@@ -23,7 +23,7 @@ def newton_solve(tau_act, M_g, K, A, tol=1e-6, max_iter=100):
     """ Solve g(q) = 0 using Newton's method """
     q = np.zeros(3)
 
-    for i in range(max_iter):
+    for _ in range(max_iter):
         tau = compute_gravity_tau(q, M_g)
         g_q = tau + K @ (q - q0) - A * tau_act
 
@@ -31,6 +31,9 @@ def newton_solve(tau_act, M_g, K, A, tol=1e-6, max_iter=100):
             return q
 
         J_g = compute_jacobian(q, M_g=M_g, K=K)
+        if np.linalg.norm(np.linalg.det(J_g)) <= 1e-3:
+            print("Configuration singularity at q =", q)
+
         delta_q = np.linalg.solve(J_g, -g_q)
         q += delta_q
 
