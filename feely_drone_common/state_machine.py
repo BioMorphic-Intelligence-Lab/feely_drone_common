@@ -332,7 +332,7 @@ class StateMachine(object):
         elif self.state == State.ROTATION:
             ctrl = self.rotation_align_control(x, v, contact)
             mean = self.update_tactile_info_sw(contact)
-            # If each arm has at leat one pad that has had
+            # If each arm has at least one pad that has had
             # consistent contact ....
             if np.any(mean > 0.9, axis=1).all():
                 self.state = State.FINALIZE
@@ -345,7 +345,7 @@ class StateMachine(object):
         elif self.state == State.FINALIZE:
             ctrl = self.finalize_grasp_control(x, v, contact)
             mean = self.update_tactile_info_sw(contact)
-            # If on each arm any of the firsst pads
+            # If on each arm any of the first pads
             #  have had consitent contact ...
             if (np.any(mean[:, :2] > 0.95, axis=1).all()
                 # ... and all of the tendon tensions have equalized
