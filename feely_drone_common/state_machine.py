@@ -334,7 +334,7 @@ class StateMachine(object):
             mean = self.update_tactile_info_sw(contact)
             # If each arm has at least one pad that has had
             # consistent contact ....
-            if np.any(mean > 0.9, axis=1).all():
+            if np.any(mean > 0.5, axis=1).all():
                 self.state = State.FINALIZE
                 print("STATE CHANGE: ROTATION -> FINALIZE")
             # Check for ABORT condition
