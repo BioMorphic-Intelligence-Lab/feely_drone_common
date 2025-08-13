@@ -119,8 +119,8 @@ class StateMachine(object):
         p_des = self.takeoff_position
         dist = self.takeoff_position - x[:3]
 
-        # Sinusoidal pattern in opening and closing the gripper
-        self.alpha = (1 - (0.25 * np.sin(2*np.pi / 10.0 * self.t) + 0.25)) * np.ones(3)
+        # Fully open the gripper
+        self.alpha = np.ones(3)
         
         if np.linalg.norm(dist) < 0.25:
             v_des = np.zeros(4)  # Stop when close enough
