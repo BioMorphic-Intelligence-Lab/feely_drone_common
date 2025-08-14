@@ -91,6 +91,10 @@ class StateMachine(object):
 
         self.tau_min=-1
 
+    def update_target_pos_estimate(self, target_pos_estimate):
+        self.target_pos_estimate = target_pos_estimate
+        self.searching_pattern.params[3, :] = target_pos_estimate
+    
     def get_des_yaw_vel(self, contacts, rot_vel=0.2):
         rows = np.sum(np.array([1.0, 3.0, 2.0]) * contacts, axis=1)
         #if rows[0] == rows[2]:
@@ -251,7 +255,7 @@ class StateMachine(object):
         self.target_yaw_estimate += self.dt * omega_des
         yaw_des = self.target_yaw_estimate
 
-        self.alpha = np.ones(3) * np.min(self.alpha)
+        self.alpha = np.zeros(3)
         v_des = np.zeros(4)
         v_des[3] = omega_des
         
