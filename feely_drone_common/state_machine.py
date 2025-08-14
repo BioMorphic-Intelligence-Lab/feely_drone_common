@@ -293,7 +293,7 @@ class StateMachine(object):
         if self.state == State.TAKEOFF:
             ctrl = self.takeoff_control(x, v, contact)
             self.reference_pos = ctrl["p_des"]  
-            if np.linalg.norm(x[:3] - self.reference_pos) < 0.05:
+            if np.linalg.norm(x[:3] - self.reference_pos) < 0.1:
                 self.state = State.SEARCHING
                 print("STATE CHANGE: TAKEOFF -> SEARCHING")
         elif self.state == State.SEARCHING:
@@ -316,7 +316,7 @@ class StateMachine(object):
             ctrl = self.position_align_control(x, v, contact, self.reference_pos)
             if np.linalg.norm(x[:3] - self.reference_pos) < 0.05:
                 self.state = State.POSITION
-                self.reference_pos = self.target_pos_estimate
+                self.reference_pos = self.target_pos_estimate - np.array([0, 0, 0.075])
                 print("STATE CHANGE: APPROACH -> POSITION")
         elif self.state == State.POSITION:
             ctrl = self.position_align_control(x, v, contact)
