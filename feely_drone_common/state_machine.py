@@ -91,6 +91,9 @@ class StateMachine(object):
 
         self.tau_min=-1
 
+    def set_takeoff_position(self, takeoff_pos):
+        self.takeoff_position = takeoff_pos
+
     def update_target_pos_estimate(self, target_pos_estimate):
         self.target_pos_estimate = target_pos_estimate
         self.searching_pattern.params[3, :] = target_pos_estimate
