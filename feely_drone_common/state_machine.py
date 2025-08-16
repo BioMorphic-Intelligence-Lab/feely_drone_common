@@ -199,9 +199,9 @@ class StateMachine(object):
         contact_ym = contact[1, :]
 
         if np.sum(1 * contact_yp) > np.sum(1 * contact_ym):
-            return np.array([0, del_p, 0])
+            return np.array([del_p, 0,  0])
         elif np.sum(1 * contact_yp) < np.sum(1 * contact_ym):
-            return np.array([0, -del_p, 0])
+            return np.array([-del_p, 0, 0])
         else:
             return np.zeros(3)
 
