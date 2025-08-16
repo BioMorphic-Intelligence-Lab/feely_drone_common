@@ -307,7 +307,7 @@ class StateMachine(object):
             ctrl = self.searching_position_control(x, v, contact)
             self.reference_pos = ctrl["p_des"]  
             if contact.any():
-                self.target_pos_estimate = self.get_new_ref_pos(x, contact) - np.array([0, 0, 0.1])
+                self.target_pos_estimate = self.get_new_ref_pos(x, contact)
                 self.reference_pos -= np.array([0.0, 0.0, 0.15])
                 self.state = State.TOUCHED
                 print("STATE CHANGE: SEARCHING -> TOUCHED")
@@ -323,12 +323,13 @@ class StateMachine(object):
             ctrl = self.position_align_control(x, v, contact, self.reference_pos)
             if np.linalg.norm(x[:3] - self.reference_pos) < 0.05:
                 self.state = State.POSITION
-                self.reference_pos = self.target_pos_estimate - np.array([0, 0, 0.0])
+                self.reference_pos = self.target_pos_estimate
                 print("STATE CHANGE: APPROACH -> POSITION")
         elif self.state == State.POSITION:
             ctrl = self.position_align_control(x, v, contact)
             self.reference_pos = ctrl["p_des"]
             if np.linalg.norm(x[:3] - self.target_pos_estimate) < 0.1:
+                self.reference_pos = self.target_pos_estimate
                 self.state = State.ROTATION
                 print("STATE CHANGE: POSITION -> ROTATION")
             # Check for ABORT condition
