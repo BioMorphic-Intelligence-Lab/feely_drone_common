@@ -95,8 +95,11 @@ class StateMachine(object):
         self.takeoff_position = takeoff_pos
 
     def update_target_pos_estimate(self, target_pos_estimate):
-        self.target_pos_estimate = target_pos_estimate
+        self.init_target_pos_estimate = target_pos_estimate
         self.searching_pattern.params[3, :] = target_pos_estimate
+
+    def update_target_yaw_estimate(self, target_yaw_estimate):
+        self.init_target_yaw_estimate = target_yaw_estimate
     
     def get_des_yaw_vel(self, contacts, rot_vel=0.2):
         rows = np.sum(np.array([1.0, 3.0, 2.0]) * contacts, axis=1)
