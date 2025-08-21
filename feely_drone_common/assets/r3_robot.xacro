@@ -19,11 +19,18 @@
         
         <link name="${prefix}_link1">
             <visual>
-                <origin xyz="${-width * 0.5} ${0.0} ${l1 * 0.5}" rpy="0 ${pi2} 0"/>
-                <geometry>
-                    <mesh filename="./meshes/ProximalPhalang.dae"/>
-                    <!--<cylinder radius="${width}" length="${l1}"/>-->
-                </geometry>
+                <xacro:if value="$(arg full_visuals)">
+                    <origin xyz="${-width * 0.5} ${0.0} ${l1 * 0.5}" rpy="0 ${pi2} 0"/>
+                    <geometry>
+                        <mesh filename="./meshes/ProximalPhalang.dae"/>
+                    </geometry>
+                </xacro:if>
+                <xacro:unless value="$(arg full_visuals)">
+                    <origin xyz="0 0 ${l1 * 0.5}" rpy="0 0 0"/>
+                    <geometry>
+                        <cylinder radius="${width}" length="${l1}"/>
+                    </geometry>
+                </xacro:unless>
             </visual>
             <collision>
                 <origin xyz="0 0 ${l1 * 0.5}" rpy="0 0 0"/>
@@ -43,10 +50,19 @@
         </link>
         <link name="${prefix}_link2">
             <visual>
-                <origin xyz="${width * 0.4} 0 ${l2 * 0.5}" rpy="0 ${pi2} 0"/>
-                <geometry>
-                    <mesh filename="./meshes/MiddlePhalang.dae"/>
-                </geometry>
+                <xacro:if value="$(arg full_visuals)">
+                    <origin xyz="${width * 0.4} 0 ${l2 * 0.5}" rpy="0 ${pi2} 0"/>
+                    <geometry>
+                        <mesh filename="./meshes/MiddlePhalang.dae"/>
+                    </geometry>
+                </xacro:if>
+
+                <xacro:unless value="$(arg full_visuals)">
+                    <origin xyz="0 0 ${l2 * 0.5}" rpy="0 0 0"/>
+                    <geometry>
+                        <cylinder radius="${width}" length="${l2}"/>
+                    </geometry>
+                </xacro:unless>
             </visual>
             <collision>
                 <origin xyz="0 0 ${l2 * 0.5}" rpy="0 0 0"/>
@@ -66,10 +82,19 @@
         </link>
         <link name="${prefix}_link3">
             <visual>
-                <origin xyz="-0.0026 0.0082 ${l3 * 0.25}" rpy="0 ${pi2} ${-pi2}"/>
-                <geometry>
-                    <mesh filename="./meshes/DistalPhalang.dae"/>
-                </geometry>
+                <xacro:if value="$(arg full_visuals)">
+                    <origin xyz="-0.0026 0.0082 ${l3 * 0.25}" rpy="0 ${pi2} ${-pi2}"/>
+                    <geometry>
+                        <mesh filename="./meshes/DistalPhalang.dae"/>
+                    </geometry>
+                </xacro:if>
+
+                <xacro:unless value="$(arg full_visuals)">
+                    <origin xyz="0 0 ${l3 * 0.5}" rpy="0 0 0"/>
+                    <geometry>
+                        <cylinder radius="${width}" length="${l3}"/>
+                    </geometry>
+                </xacro:unless>
             </visual>
             <collision>
                 <origin xyz="0 0 ${l3 * 0.5}" rpy="0 0 0"/>

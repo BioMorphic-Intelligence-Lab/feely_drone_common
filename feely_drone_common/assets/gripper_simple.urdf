@@ -7,9 +7,9 @@
   <link name="arm1_base"/>
   <link name="arm1_link1">
     <visual>
-      <origin rpy="0 1.5707963267948966 0" xyz="-0.005 0.0 0.0275"/>
+      <origin rpy="0 0 0" xyz="0 0 0.0275"/>
       <geometry>
-        <mesh filename="./meshes/ProximalPhalang.dae"/>
+        <cylinder length="0.055" radius="0.01"/>
       </geometry>
     </visual>
     <collision>
@@ -26,9 +26,9 @@
   </link>
   <link name="arm1_link2">
     <visual>
-      <origin rpy="0 1.5707963267948966 0" xyz="0.004 0 0.02"/>
+      <origin rpy="0 0 0" xyz="0 0 0.02"/>
       <geometry>
-        <mesh filename="./meshes/MiddlePhalang.dae"/>
+        <cylinder length="0.04" radius="0.01"/>
       </geometry>
     </visual>
     <collision>
@@ -45,9 +45,9 @@
   </link>
   <link name="arm1_link3">
     <visual>
-      <origin rpy="0 1.5707963267948966 -1.5707963267948966" xyz="-0.0026 0.0082 0.01125"/>
+      <origin rpy="0 0 0" xyz="0 0 0.0225"/>
       <geometry>
-        <mesh filename="./meshes/DistalPhalang.dae"/>
+        <cylinder length="0.045" radius="0.01"/>
       </geometry>
     </visual>
     <collision>
@@ -86,9 +86,9 @@
   <link name="arm2_base"/>
   <link name="arm2_link1">
     <visual>
-      <origin rpy="0 1.5707963267948966 0" xyz="-0.005 0.0 0.0275"/>
+      <origin rpy="0 0 0" xyz="0 0 0.0275"/>
       <geometry>
-        <mesh filename="./meshes/ProximalPhalang.dae"/>
+        <cylinder length="0.055" radius="0.01"/>
       </geometry>
     </visual>
     <collision>
@@ -105,9 +105,9 @@
   </link>
   <link name="arm2_link2">
     <visual>
-      <origin rpy="0 1.5707963267948966 0" xyz="0.004 0 0.02"/>
+      <origin rpy="0 0 0" xyz="0 0 0.02"/>
       <geometry>
-        <mesh filename="./meshes/MiddlePhalang.dae"/>
+        <cylinder length="0.04" radius="0.01"/>
       </geometry>
     </visual>
     <collision>
@@ -124,9 +124,9 @@
   </link>
   <link name="arm2_link3">
     <visual>
-      <origin rpy="0 1.5707963267948966 -1.5707963267948966" xyz="-0.0026 0.0082 0.01125"/>
+      <origin rpy="0 0 0" xyz="0 0 0.0225"/>
       <geometry>
-        <mesh filename="./meshes/DistalPhalang.dae"/>
+        <cylinder length="0.045" radius="0.01"/>
       </geometry>
     </visual>
     <collision>
@@ -165,9 +165,9 @@
   <link name="arm3_base"/>
   <link name="arm3_link1">
     <visual>
-      <origin rpy="0 1.5707963267948966 0" xyz="-0.005 0.0 0.0275"/>
+      <origin rpy="0 0 0" xyz="0 0 0.0275"/>
       <geometry>
-        <mesh filename="./meshes/ProximalPhalang.dae"/>
+        <cylinder length="0.055" radius="0.01"/>
       </geometry>
     </visual>
     <collision>
@@ -184,9 +184,9 @@
   </link>
   <link name="arm3_link2">
     <visual>
-      <origin rpy="0 1.5707963267948966 0" xyz="0.004 0 0.02"/>
+      <origin rpy="0 0 0" xyz="0 0 0.02"/>
       <geometry>
-        <mesh filename="./meshes/MiddlePhalang.dae"/>
+        <cylinder length="0.04" radius="0.01"/>
       </geometry>
     </visual>
     <collision>
@@ -203,9 +203,9 @@
   </link>
   <link name="arm3_link3">
     <visual>
-      <origin rpy="0 1.5707963267948966 -1.5707963267948966" xyz="-0.0026 0.0082 0.01125"/>
+      <origin rpy="0 0 0" xyz="0 0 0.0225"/>
       <geometry>
-        <mesh filename="./meshes/DistalPhalang.dae"/>
+        <cylinder length="0.045" radius="0.01"/>
       </geometry>
     </visual>
     <collision>
@@ -257,7 +257,7 @@
   <link name="base">
     <visual>
       <geometry>
-        <mesh filename="./meshes/FeelyDroneBase.dae"/>
+        <box size="0.25 0.225 0.08"/>
       </geometry>
     </visual>
     <collision>
