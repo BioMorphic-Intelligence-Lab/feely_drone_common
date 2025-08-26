@@ -277,7 +277,7 @@
     <child link="base"/>
   </joint>
   <joint name="x_pos" type="prismatic">
-    <origin rpy="0 0 0" xyz="0 0 -0.16"/>
+    <origin rpy="0 0 0" xyz="0 0 -0.08"/>
     <parent link="world"/>
     <child link="p1"/>
     <axis xyz="1 0 0"/>
