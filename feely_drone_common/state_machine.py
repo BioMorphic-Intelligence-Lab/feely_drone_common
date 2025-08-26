@@ -101,7 +101,7 @@ class StateMachine(object):
     def update_target_yaw_estimate(self, target_yaw_estimate):
         self.init_target_yaw_estimate = target_yaw_estimate
     
-    def get_des_yaw_vel(self, contacts, rot_vel=0.2):
+    def get_des_yaw_vel(self, contacts, rot_vel=0.025):
         rows = np.sum(np.array([1.0, 3.0, 2.0]) * contacts, axis=1)
         #if rows[0] == rows[2]:
         #    return 0.0
@@ -197,16 +197,17 @@ class StateMachine(object):
                 'v_des': v_des,
                 'yaw_des': yaw_des}
 
-    def position_fine_alignment(self, contact, del_p=0.01):
+    def position_fine_alignment(self, contact, del_p=0.05):
         contact_yp = contact[0, :] | contact[2, :]
         contact_ym = contact[1, :]
 
+        alignment = np.zeros(3)
         if np.sum(1 * contact_yp) > np.sum(1 * contact_ym):
-            return np.array([del_p, 0,  0])
+            alignment = np.array([-del_p, 0,  del_p])
         elif np.sum(1 * contact_yp) < np.sum(1 * contact_ym):
-            return np.array([-del_p, 0, 0])
-        else:
-            return np.zeros(3)
+            alignment = np.array([del_p, 0, del_p])
+        return alignment
+        
 
     def rotation_align_control(self, x, v, contact):
         
@@ -243,6 +244,15 @@ class StateMachine(object):
 
     def finalize_grasp_control(self, x, v, contact):
             
+        if contact.any() and np.linalg.norm(self.target_pos_estimate[:2] - x[:2]) < 0.01:
+            cT = np.cos(x[3])
+            sT = np.sin(x[3])
+
+            rot = np.array([[cT, -sT, 0],
+                            [sT,  cT, 0],
+                            [ 0,   0, 1]])
+            delta_p = rot @ self.position_fine_alignment(contact)
+            self.target_pos_estimate += delta_p
         p_des = self.target_pos_estimate
         yaw_des = self.target_yaw_estimate
 
