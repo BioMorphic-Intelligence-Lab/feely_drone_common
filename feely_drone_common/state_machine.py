@@ -320,8 +320,18 @@ class StateMachine(object):
             ctrl = self.searching_position_control(x, v, contact)
             self.reference_pos = ctrl["p_des"]  
             if contact.any():
+                # Find new target pos estimate based on contact
                 self.target_pos_estimate = self.get_new_ref_pos(x, contact)
+                
+                # Find difference in the xy-plane 
+                planar_diff = self.target_pos_estimate - self.reference_pos
+
+                # Move slightly away from the target
+                self.reference_pos -= planar_diff / np.linalg.norm(planar_diff) * 0.1
+
+                # Also move down
                 self.reference_pos -= np.array([0.0, 0.0, 0.15])
+                
                 self.state = State.TOUCHED
                 print("STATE CHANGE: SEARCHING -> TOUCHED")
         elif self.state == State.TOUCHED:
