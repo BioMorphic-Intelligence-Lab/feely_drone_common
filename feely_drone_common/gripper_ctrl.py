@@ -2,7 +2,7 @@ import numpy as np
 
 class GripperCtrl:
 
-    def __init__(self, tau_max, p_gain=0.01, d_gain=0.1):
+    def __init__(self, tau_max, p_gain=0.025, d_gain=0.1):
         
         # Remember maximum force
         self.tau_max = tau_max

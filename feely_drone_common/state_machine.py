@@ -71,7 +71,8 @@ class StateMachine(object):
                                                joint_angles=np.reshape([q0] * 3, [3,3]),
                                                p0=p0, rot0=rot0, l=l_arm)
 
-        self.tau_min=-1
+        self.tau_min = -1
+        
 
     def reset(self):
 
@@ -89,7 +90,8 @@ class StateMachine(object):
                                                joint_angles=np.reshape([self.q0] * 3, [3,3]),
                                                p0=self.p0, rot0=self.rot0, l=self.l)
 
-        self.tau_min=-1
+        self.tau_min = -1
+        
 
     def set_takeoff_position(self, takeoff_pos):
         self.takeoff_position = takeoff_pos
@@ -150,16 +152,25 @@ class StateMachine(object):
         # Extract new desired control values
         p_des, v_des, self.tau_min = self.searching_pattern.get_ref_pos_vel(x=x[:3], last_tau=self.tau_min)
 
+        # Handle the wraparound
+        if self.tau_min >= 1.0:
+            self.tau_min = 0.0
+
         # Append zero to v_des for yaw control
         v_des = np.append(v_des, 0.0)
 
-        # Sinusoidal pattern in opening and closing the gripper
-        self.alpha = (1 - (0.25 * np.sin(2*np.pi / 10.0 * self.t) + 0.25)) * np.ones(3)
+        # Sinusoidal pattern in opening and closing the gripper being maximally open 
+        # at the peaks of the searching pattern, i.e. tau = 0.125, 0.25, 0.375, 0.75
+        self.alpha = (1 - (0.25 * np.sin(4 *  2 * np.pi * self.tau_min  + np.pi/2) + 0.25)) * np.ones(3)
 
-        if self.tau_min >= 0.99:
+        # If we're close to completing a full cycle
+        if  self.tau_min > 0.99:   # tolerance band near 1
             self.searching_pattern.step_height(0.075)
-            self.target_pos_estimate[2] += 0.1
-            self.tau_min = -1
+            self.target_pos_estimate[2] += 0.075
+            self.tau_min = -1.0
+            # Reset init_tau so we don't immediately retrigger
+
+            self.tau_min = -1.0
 
         yaw_des = self.target_yaw_estimate
         
