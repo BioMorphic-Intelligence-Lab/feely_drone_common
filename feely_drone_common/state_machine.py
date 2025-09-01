@@ -133,11 +133,17 @@ class StateMachine(object):
 
         # Fully open the gripper
         self.alpha = np.ones(3)
+
+        yaw_rate = np.sign(yaw_des - x[3]) * 0.1
         
         if np.linalg.norm(dist) < 0.25:
-            v_des = np.zeros(4)  # Stop when close enough
+            v_des = 0.25 * np.append(dist, 0.0)
+        elif np.linalg.norm(dist) < 0.1:
+            v_des = 0.1 * np.append(dist, 0.0) 
+        elif np.linalg.norm(dist) < 0.05:
+            v_des = np.zeros(4)  
         else:
-            v_des = 0.5 * np.append(dist, 0)  # No yawrate control during takeoff
+            v_des = 0.5 * np.append(dist, yaw_rate)
 
         return {'alpha': self.alpha,
                 'p_des': p_des,
