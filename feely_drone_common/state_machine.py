@@ -369,7 +369,8 @@ class StateMachine(object):
             ctrl = self.position_align_control(x, v, contact)
             self.reference_pos = ctrl["p_des"]
             if np.linalg.norm(x[:3] - self.target_pos_estimate) < 0.1:
-                self.reference_pos = self.target_pos_estimate
+                self.target_pos_estimate += np.array([0, 0, 0.1])
+		self.reference_pos = self.target_pos_estimate
                 self.state = State.ROTATION
                 print("STATE CHANGE: POSITION -> ROTATION")
             # Check for ABORT condition
