@@ -9,8 +9,8 @@ class SearchPattern(ABC):
     def __init__(self, params, n=500, vel_norm=1.0, dt=0.01):
         assert params.shape[1] == 3, "Parameters need to be three dimensional!"
         # Save the parameters
-        self.init_params = params
-        self.params = params
+        self.init_params = params.copy()
+        self.params = params.copy()
         # Create a discrete set of sampling points along tau
         self.tau_dis = np.linspace(0, 1, n)
         # Find the corresponding trajectory points
@@ -44,7 +44,7 @@ class SearchPattern(ABC):
         """
         Reset the search pattern to its initial state.
         """
-        self.params = self.init_params
+        self.params = self.init_params.copy()
 
         # Find the corresponding trajectory points
         self.traj_dis = np.array([self.f(tau) for tau in self.tau_dis])
