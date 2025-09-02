@@ -2,10 +2,13 @@
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="cylinder">
 
     <xacro:property name="sqrt2" value="1.41421356237" />
-
-    <xacro:property name="radius" value="0.03" />
+    <xacro:arg name="base_path" default="./"/>
+    <xacro:arg name="cylinder_radius" default="0.03"/>
+    <xacro:property name="radius" value="$(arg cylinder_radius)"/>
     <xacro:property name="length" value="${5 * sqrt2}" />
     <xacro:property name="m" value="1" />
+
+    <xacro:arg name="full_visuals" default="true"/>
 
     <!-- Wrap the entire robot definition in a macro -->
     <xacro:macro name="cylinder" params="xyz rpy">
@@ -17,6 +20,12 @@
                 <geometry>
                     <cylinder radius="${radius}" length="${length}"/>
                 </geometry>
+                <xacro:if value="$(arg full_visuals)">
+                    <material name="cylinder_material">
+                        <color rgba="1.0 1.0 1.0 1.0"/>
+                        <texture filename="$(arg base_path)textures/tree_bark.jpg"/>
+                    </material>
+                </xacro:if>
             </visual>
             <collision>
                 <origin xyz="0 0 0" rpy="1.57079633 0 0"/>

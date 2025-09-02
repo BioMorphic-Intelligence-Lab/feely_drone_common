@@ -10,7 +10,11 @@ setup(
     ],
     include_package_data=True,  # Include package data files
     package_data={
-        "feely_drone_common": ["assets/*.urdf"],  # Include these files
+        "feely_drone_common": [
+            "assets/*.urdf",
+            "assets/cylinders/*.urdf",
+            "assets/textures/tree_bark.jpg"
+        ],  # Include these files
     },
     author="Anton Bredenbeck",
     description="Common Implementations used for the Feely Drone project",
