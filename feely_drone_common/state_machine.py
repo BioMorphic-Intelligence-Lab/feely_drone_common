@@ -354,18 +354,29 @@ class StateMachine(object):
         elif self.state == State.TOUCHED:
             # Fully open the gripper if the touch happened
             self.alpha = np.ones(3)
+            mean = self.update_tactile_info_sw(contact)
             ctrl = self.position_align_control(x, v, contact, self.reference_pos)
+            
             if np.linalg.norm(x[:3] - self.reference_pos) < 0.05:
                 self.state = State.APPROACH
                 self.reference_pos = self.target_pos_estimate - np.array([0, 0, 0.2])
                 print("STATE CHANGE: TOUCHED -> APPROACH")
+            if np.any(mean > 0.5, axis=1).all():
+                self.state = State.FINALIZE
+                print("STATE CHANGE: TOUCHED -> FINALIZE")
         elif self.state == State.APPROACH:
             ctrl = self.position_align_control(x, v, contact, self.reference_pos)
+        
+            mean = self.update_tactile_info_sw(contact)
+            if np.any(mean > 0.5, axis=1).all():
+                self.state = State.FINALIZE
+                print("STATE CHANGE: APPROACH -> FINALIZE")
             if np.linalg.norm(x[:3] - self.reference_pos) < 0.05:
                 self.state = State.POSITION
                 self.reference_pos = self.target_pos_estimate
                 print("STATE CHANGE: APPROACH -> POSITION")
         elif self.state == State.POSITION:
+            mean = self.update_tactile_info_sw(contact)
             ctrl = self.position_align_control(x, v, contact)
             self.reference_pos = ctrl["p_des"]
             if np.linalg.norm(x[:3] - self.target_pos_estimate) < 0.1:
@@ -378,6 +389,11 @@ class StateMachine(object):
                 self.target_pos_estimate += np.array([0, 0, -0.25])
                 self.state = State.ABORT
                 print("STATE CHANGE: POSITION -> ABORT")
+            # If each arm has at least one pad that has had
+            # consistent contact ....
+            if np.any(mean > 0.5, axis=1).all():
+                self.state = State.FINALIZE
+                print("STATE CHANGE: POSITION -> FINALIZE")
         elif self.state == State.ROTATION:
             ctrl = self.rotation_align_control(x, v, contact)
             mean = self.update_tactile_info_sw(contact)

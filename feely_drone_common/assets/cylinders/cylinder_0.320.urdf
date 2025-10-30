@@ -12,7 +12,7 @@
         <cylinder length="7.07106781185" radius="0.32"/>
       </geometry>
       <material name="cylinder_material">
-        <color rgba="1.0 1.0 1.0 1.0"/>
+        <color rgba="0.545 0.271 0.075 1.0"/>
         <texture filename="../textures/tree_bark.jpg"/>
       </material>
     </visual>

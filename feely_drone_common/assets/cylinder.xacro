@@ -22,7 +22,7 @@
                 </geometry>
                 <xacro:if value="$(arg full_visuals)">
                     <material name="cylinder_material">
-                        <color rgba="1.0 1.0 1.0 1.0"/>
+                        <color rgba="0.545 0.271 0.075 1.0"/>
                         <texture filename="$(arg base_path)textures/tree_bark.jpg"/>
                     </material>
                 </xacro:if>
