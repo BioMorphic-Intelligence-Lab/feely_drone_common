@@ -13,8 +13,12 @@ setup(
         "feely_drone_common": [
             "assets/*.urdf",
             "assets/cylinders/*.urdf",
-            "assets/textures/tree_bark.jpg"
-        ],  # Include these files
+            "assets/hbars/*.urdf",
+            "assets/textures/tree_bark.jpg",
+            "assets/meshes/*",
+            "assets/meshes/*/*",
+            "assets/meshes/*/*/*",
+        ],  # Include meshes for cyberzoo URDF
     },
     author="Anton Bredenbeck",
     description="Common Implementations used for the Feely Drone project",
