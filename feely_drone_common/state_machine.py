@@ -67,7 +67,7 @@ class StateMachine(object):
         ])
 
         self.reference_pos = np.zeros(3)
-        self.contact_locs = forward_kinematics(p=np.zeros(4), 
+        self.contact_locs = forward_kinematics(p=np.zeros(6), 
                                                joint_angles=np.reshape([q0] * 3, [3,3]),
                                                p0=p0, rot0=rot0, l=l_arm)
 
@@ -86,7 +86,7 @@ class StateMachine(object):
         self.tactile_info_sw = np.zeros([10, 3, 3], dtype=float)
         
         self.reference_pos = np.zeros(3)
-        self.contact_locs = forward_kinematics(p=np.zeros(4), 
+        self.contact_locs = forward_kinematics(p=np.zeros(6), 
                                                joint_angles=np.reshape([self.q0] * 3, [3,3]),
                                                p0=self.p0, rot0=self.rot0, l=self.l)
 
@@ -300,7 +300,7 @@ class StateMachine(object):
     
     def get_new_ref_pos(self, x, contact):     
 
-        cntc_sens_loc = get_contact_sensor_location(x[:4],
+        cntc_sens_loc = get_contact_sensor_location(x[:6],
                                                     alpha=self.alpha,
                                                     M_g=self.M_g,
                                                     K=self.K,
@@ -435,7 +435,7 @@ class StateMachine(object):
             ctrl = self.position_align_control(x, v, contact)
     
         self.t += self.dt
-        self.contact_locs = get_contact_sensor_location(x[:4],
+        self.contact_locs = get_contact_sensor_location(x[:6],
                                                     alpha=self.alpha,
                                                     M_g=self.M_g,
                                                     K=self.K,
