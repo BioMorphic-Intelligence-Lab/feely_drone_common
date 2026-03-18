@@ -1,0 +1,84 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="gripper">
+
+    <xacro:arg name="full_visuals" default="false"/>
+
+    <!-- Include the robot macro -->
+    <xacro:include filename="r3_robot.xacro"/>
+    
+    <!-- Base Properties -->
+    <xacro:property name="m_base" value="1.0" />
+    <xacro:property name="base_width" value="0.25" />
+    <xacro:property name="base_depth" value="0.225" />
+    <xacro:property name="base_height" value="0.08" />
+    <xacro:property name="stack_height" value="0.08" />
+    <xacro:property name="stack_width" value="0.075" />
+    <xacro:property name="stack_depth" value="0.1" />
+
+    <!-- Create three instances of the robot, rotated to form a gripper -->
+    <xacro:r3_robot prefix="arm1" xyz="${-stack_width/2 + 0.014} ${-stack_depth/2 + 0.0175} ${0.5*(base_height)+stack_height}" rpy="${-pi2} 0 ${pi2}" />
+    <xacro:r3_robot prefix="arm2" xyz="${ stack_width/2 - 0.014}  0.0              ${0.5*(base_height)+stack_height}" rpy="${-pi2} 0 ${-pi2}" />
+    <xacro:r3_robot prefix="arm3" xyz="${-stack_width/2 + 0.014} ${ stack_depth/2 - 0.026} ${0.5*(base_height)+stack_height}" rpy="${-pi2} 0 ${pi2}" />
+
+    <link name="drone">
+        <xacro:if value="$(arg full_visuals)">
+            <visual>
+                <origin xyz="0 0 ${- stack_height}" rpy="0 0 0"/>
+                <geometry>
+                    <mesh filename="./meshes/FeelyDroneBase.dae"/>
+                </geometry>
+            </visual>
+        </xacro:if>
+        <xacro:unless value="$(arg full_visuals)">
+            <visual>
+                <origin xyz="0 0 ${base_height - stack_height}" rpy="0 0 0"/>
+                <geometry>
+                    <box size="${stack_width} ${stack_depth} ${stack_height}"/>
+                </geometry>
+            </visual>
+            <visual>
+                <origin xyz="0 0 ${0.25*base_height - stack_height}" rpy="0 0 0"/>
+                <geometry>
+                <box size="${base_width} ${base_depth} ${0.5*base_height}"/>
+                </geometry>
+            </visual> 
+        </xacro:unless>
+        <collision>
+            <origin xyz="0 0 ${base_height - stack_height}" rpy="0 0 0"/>
+            <geometry>
+                <box size="${stack_width} ${stack_depth} ${stack_height}"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="0 0 ${0.25*base_height - stack_height}" rpy="0 0 0"/>
+            <geometry>
+               <box size="${base_width} ${base_depth} ${0.5*base_height}"/>
+            </geometry>
+        </collision>
+        <inertial>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <mass value="${m_base}" />
+            <inertia ixx="${1.0/12.0 * m_base * (base_height*base_height + base_depth*base_depth)}"
+                     ixy="0.0" ixz="0.0"
+                     iyy="${1.0/12.0 * m_base * (base_height*base_height + base_width*base_width)}" 
+                     iyz="0.0"
+                     izz="${1.0/12.0 * m_base * (base_width*base_width + base_depth*base_depth)}" />
+        </inertial>
+    </link>
+
+    <joint name="arm1_fix" type="fixed">
+        <origin xyz="0 0 ${-stack_height}" rpy="0 0 0"/>
+        <parent link="drone" />
+        <child link="arm1_base" />
+    </joint>
+    <joint name="arm2_fix" type="fixed">
+        <origin xyz="0 0 ${-stack_height}" rpy="0 0 0"/>
+        <parent link="drone" />
+        <child link="arm2_base" />
+    </joint>
+    <joint name="arm3_fix" type="fixed">
+        <origin xyz="0 0 ${-stack_height}" rpy="0 0 0"/>
+        <parent link="drone" />
+        <child link="arm3_base" />
+    </joint>
+</robot>

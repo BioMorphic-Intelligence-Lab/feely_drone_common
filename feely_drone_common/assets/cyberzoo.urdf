@@ -12,42 +12,42 @@
         <pose>-5 -5 0.01 0 0 0</pose>
         <cast_shadows>false</cast_shadows>
         <geometry>
-          <mesh filename="./meshes/cyberzoo/cyberzoo_floor.dae"/>
+          <mesh filename="meshes/cyberzoo/cyberzoo_floor.dae"/>
         </geometry>
       </visual>
       <visual name="poles">
         <pose>-5 -5 0 0 0 0</pose>
         <cast_shadows>false</cast_shadows>
         <geometry>
-          <mesh filename="./meshes/cyberzoo/cyberzoo_poles.dae"/>
+          <mesh filename="meshes/cyberzoo/cyberzoo_poles.dae"/>
         </geometry>
       </visual>
       <visual name="wires">
         <pose>-5 -5 0 0 0 0</pose>
         <cast_shadows>false</cast_shadows>
         <geometry>
-          <mesh filename="./meshes/cyberzoo/cyberzoo_wires.dae"/>
+          <mesh filename="meshes/cyberzoo/cyberzoo_wires.dae"/>
         </geometry>
       </visual>
       <visual name="cams">
         <pose>-5 -5 0 0 0 0</pose>
         <cast_shadows>false</cast_shadows>
         <geometry>
-          <mesh filename="./meshes/cyberzoo/cyberzoo_cams.dae"/>
+          <mesh filename="meshes/cyberzoo/cyberzoo_cams.dae"/>
         </geometry>
       </visual>
       <visual name="lighting">
         <pose>-5 -5 0 0 0 0</pose>
         <cast_shadows>false</cast_shadows>
         <geometry>
-          <mesh filename="./meshes/cyberzoo/cyberzoo_lighting.dae"/>
+          <mesh filename="meshes/cyberzoo/cyberzoo_lighting.dae"/>
         </geometry>
       </visual>
       <visual name="glow">
         <pose>-5 -5 0 0 0 0</pose>
         <cast_shadows>false</cast_shadows>
         <geometry>
-          <mesh filename="./meshes/cyberzoo/cyberzoo_lighting_glow.dae"/>
+          <mesh filename="meshes/cyberzoo/cyberzoo_lighting_glow.dae"/>
         </geometry>
       </visual>
       
@@ -55,14 +55,14 @@
         <pose>-5 -5 0 0 0 0</pose>
         <cast_shadows>false</cast_shadows>
         <geometry>
-          <mesh filename="./meshes/cyberzoo/cyberzoo_walls.dae"/>
+          <mesh filename="meshes/cyberzoo/cyberzoo_walls.dae"/>
         </geometry>
       </visual>
       <visual name="net">
         <pose>-5 -5 0 0 0 0</pose>
         <cast_shadows>false</cast_shadows>
         <geometry>
-          <mesh filename="./meshes/cyberzoo/cyberzoo_net.dae"/>
+          <mesh filename="meshes/cyberzoo/cyberzoo_net.dae"/>
         </geometry>
       </visual>      
     </link>

@@ -1,0 +1,4 @@
+recursive-include feely_drone_common/assets/meshes *
+recursive-include feely_drone_common/assets/hbars *.urdf
+recursive-include feely_drone_common/assets/cylinders *.urdf
+recursive-include feely_drone_common/assets *.urdf

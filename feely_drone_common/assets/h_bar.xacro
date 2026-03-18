@@ -1,0 +1,156 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="h_bar">
+
+    <!-- Basic material / visualization controls -->
+    <xacro:arg name="base_path" default="./"/>
+    <xacro:arg name="full_visuals" default="true"/>
+
+    <!-- Geometric parameters -->
+    <!-- Vertical distance between top and bottom legs (center-to-center, along z) -->
+    <xacro:arg name="leg_vertical_span" default="0.1"/>
+    <!-- Length of each leg orthogonal to profile (along x by default after rotation) -->
+    <xacro:arg name="leg_length" default="0.10"/>
+    <!-- Thickness of beams along x (profile thickness) -->
+    <xacro:arg name="thickness" default="0.01"/>
+    <!-- Length of the beam profile along y (profile width) -->
+    <xacro:arg name="profile_length" default="5.0"/>
+    <!-- Mass of the entire H-bar (used for inertia) -->
+    <xacro:arg name="mass" default="1.0"/>
+
+    <!-- Derived properties -->
+    <!-- Total vertical extent spanned by legs and crossbar (z) -->
+    <xacro:property name="L_span" value="$(arg leg_vertical_span)"/>
+    <!-- Leg length along their local z (maps to world x after rotation) -->
+    <xacro:property name="L_leg" value="$(arg leg_length)"/>
+    <!-- Beam thickness along x -->
+    <xacro:property name="t" value="$(arg thickness)"/>
+    <!-- Beam width along y -->
+    <xacro:property name="w" value="$(arg profile_length)"/>
+    <xacro:property name="m_total" value="$(arg mass)"/>
+
+    <!-- Split mass roughly equally between three beams -->
+    <xacro:property name="m_beam" value="${m_total / 3.0}"/>
+
+    <!-- Simple box inertia helper for a box aligned with axes -->
+    <xacro:macro name="box_inertia" params="m sx sy sz">
+        <inertia
+            ixx="${1.0/12.0 * m * (sy*sy + sz*sz)}"
+            iyy="${1.0/12.0 * m * (sx*sx + sz*sz)}"
+            izz="${1.0/12.0 * m * (sx*sx + sy*sy)}"
+            ixy="0.0" ixz="0.0" iyz="0.0"/>
+    </xacro:macro>
+
+    <!-- Macro that instantiates a standalone H-bar at given pose -->
+    <xacro:macro name="h_bar" params="xyz rpy">
+        <link name="world"/>
+
+        <!-- Bottom leg (aligned with z-axis after rotation, below origin) -->
+        <link name="hbar_bottom_leg">
+            <visual>
+                <origin xyz="0 0 0" rpy="0 1.57079633 0"/>
+                <geometry>
+                    <!-- thickness x, profile width y, leg length along local z -->
+                    <box size="${t} ${w} ${L_leg}"/>
+                </geometry>
+                <xacro:if value="$(arg full_visuals)">
+                    <material name="hbar_material_bottom">
+                        <!-- Brushed steel-like gray -->
+                        <color rgba="0.75 0.75 0.78 1.0"/>
+                    </material>
+                </xacro:if>
+            </visual>
+            <collision>
+                <origin xyz="0 0 0" rpy="0 1.57079633 0"/>
+                <geometry>
+                    <box size="${t} ${w} ${L_leg}"/>
+                </geometry>
+            </collision>
+            <inertial>
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <mass value="${m_beam}"/>
+                <xacro:box_inertia m="${m_beam}" sx="${t}" sy="${w}" sz="${L_leg}"/>
+            </inertial>
+        </link>
+
+        <!-- Top leg (aligned with z-axis after rotation, above origin) -->
+        <link name="hbar_top_leg">
+            <visual>
+                <origin xyz="0 0 0" rpy="0 1.57079633 0"/>
+                <geometry>
+                    <box size="${t} ${w} ${L_leg}"/>
+                </geometry>
+                <xacro:if value="$(arg full_visuals)">
+                    <material name="hbar_material_top">
+                        <!-- Brushed steel-like gray -->
+                        <color rgba="0.75 0.75 0.78 1.0"/>
+                    </material>
+                </xacro:if>
+            </visual>
+            <collision>
+                <origin xyz="0 0 0" rpy="0 1.57079633 0"/>
+                <geometry>
+                    <box size="${t} ${w} ${L_leg}"/>
+                </geometry>
+            </collision>
+            <inertial>
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <mass value="${m_beam}"/>
+                <xacro:box_inertia m="${m_beam}" sx="${t}" sy="${w}" sz="${L_leg}"/>
+            </inertial>
+        </link>
+
+        <!-- Crossbar: vertical (aligned with z-axis) at the origin -->
+        <link name="hbar_crossbar">
+            <visual>
+                <!-- Thickness in x,y, length in z -->
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <geometry>
+                    <box size="${t} ${w} ${L_span}"/>
+                </geometry>
+                <xacro:if value="$(arg full_visuals)">
+                    <material name="hbar_material_cross">
+                        <!-- Slightly darker steel for visual contrast -->
+                        <color rgba="0.65 0.65 0.7 1.0"/>
+                    </material>
+                </xacro:if>
+            </visual>
+            <collision>
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <geometry>
+                    <box size="${t} ${w} ${L_span}"/>
+                </geometry>
+            </collision>
+            <inertial>
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <mass value="${m_beam}"/>
+                <xacro:box_inertia m="${m_beam}" sx="${t}" sy="${w}" sz="${L_span}"/>
+            </inertial>
+        </link>
+
+        <!-- Fix crossbar to world; its center is at the macro pose -->
+        <joint name="hbar_cross_fix" type="fixed">
+            <parent link="world"/>
+            <child link="hbar_crossbar"/>
+            <origin xyz="${xyz}" rpy="${rpy}"/>
+        </joint>
+
+        <!-- Top leg: translated +L_leg/2 in x and +L_span/2 in z relative to crossbar -->
+        <joint name="hbar_top_fix" type="fixed">
+            <parent link="hbar_crossbar"/>
+            <child link="hbar_top_leg"/>
+            <origin xyz="0 0 ${0.5*L_span}" rpy="0 0.0 0"/>
+        </joint>
+
+        <!-- Bottom leg: translated +L_leg/2 in x and -L_span/2 in z relative to crossbar -->
+        <joint name="hbar_bottom_fix" type="fixed">
+            <parent link="hbar_crossbar"/>
+            <child link="hbar_bottom_leg"/>
+            <origin xyz="0 0 ${-0.5*L_span}" rpy="0 0 0"/>
+        </joint>
+    </xacro:macro>
+
+    <!-- Instantiate a default H-bar at origin -->
+    <xacro:h_bar xyz="0 0 0" rpy="0 0 0"/>
+
+</robot>
+

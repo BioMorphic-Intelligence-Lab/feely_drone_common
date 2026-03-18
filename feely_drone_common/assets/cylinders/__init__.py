@@ -1,0 +1,2 @@
+"""Generated cylinder URDF assets."""
+
