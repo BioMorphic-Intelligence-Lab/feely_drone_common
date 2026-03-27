@@ -154,6 +154,124 @@ class SinusoidalSearchPattern(SearchPattern):
                 * np.sin(2 * np.pi * self.params[1, :] * tau
                                           + self.params[2, :]))
 
+class SquareSearchPattern(SearchPattern):
+    def __init__(self, params, vel_norm=1.0, dt=0.01):
+        super().__init__(params, vel_norm=vel_norm, dt=dt)
+        # params[0, 0] Side length, params[1, :] Centerpoint
+
+    def smooth_trans(self, vel_scale, v_from, v_to, t):
+        """Smooth interpolation between directions at the corner: t in [0, 1]."""
+        # Use cosine to get smooth directional blend (cosine interpolation)
+        return vel_scale * (
+            (1 - 0.5 * (1 - np.cos(np.pi * t))) * v_from +
+            (0.5 * (1 - np.cos(np.pi * t))) * v_to
+        )
+
+    def f(self, tau):
+        # This produces a square path, with tau in [0, 1), each side is 0.25 long in tau
+        # params[0, 0]: side length; params[1, :]: center of square (3D)
+        side = self.params[0, 0]
+        center = self.params[1, :]
+        tau_local = tau % 1.0
+
+        if tau_local < 0.25:
+            # Side 1: left to right (bottom)
+            t = (tau_local - 0.0) / 0.25   # [0,1)
+            p0 = center + 0.5 * side * np.array([-1, -1, 0])  # Bottom-left
+            p1 = center + 0.5 * side * np.array([ 1, -1, 0])  # Bottom-right
+            pos = p0 + (p1 - p0) * t
+        elif tau_local < 0.5:
+            # Side 2: bottom to top (right)
+            t = (tau_local - 0.25) / 0.25
+            p0 = center + 0.5 * side * np.array([ 1, -1, 0])  # Bottom-right
+            p1 = center + 0.5 * side * np.array([ 1,  1, 0])  # Top-right
+            pos = p0 + (p1 - p0) * t
+        elif tau_local < 0.75:
+            # Side 3: right to left (top)
+            t = (tau_local - 0.5) / 0.25
+            p0 = center + 0.5 * side * np.array([ 1,  1, 0])  # Top-right
+            p1 = center + 0.5 * side * np.array([-1,  1, 0])  # Top-left
+            pos = p0 + (p1 - p0) * t
+        else:
+            # Side 4: top to bottom (left)
+            t = (tau_local - 0.75) / 0.25
+            p0 = center + 0.5 * side * np.array([-1,  1, 0])  # Top-left
+            p1 = center + 0.5 * side * np.array([-1, -1, 0])  # Bottom-left
+            pos = p0 + (p1 - p0) * t
+
+        return pos
+
+    def df(self, tau):
+        tau_local = tau % 1.0
+        side = self.params[0, 0]
+        corner_eps = 0.04  # smoothing window at each corner, can be tuned
+
+        # Main velocities for straight edges
+        v1 = np.array([1, 0, 0])   # bottom: left to right
+        v2 = np.array([0, 1, 0])   # right: bottom to top
+        v3 = np.array([-1, 0, 0])  # top: right to left
+        v4 = np.array([0, -1, 0])  # left: top to bottom
+        vel_scale = side / 0.25
+
+        if tau_local < 0.25 - corner_eps:
+            vel = vel_scale * v1
+        elif tau_local < 0.25 + corner_eps:
+            # Transition: v1 → v2
+            t = (tau_local - (0.25 - corner_eps)) / (2 * corner_eps)
+            vel = self.smooth_trans(vel_scale, v1, v2, t)
+        elif tau_local < 0.5 - corner_eps:
+            vel = vel_scale * v2
+        elif tau_local < 0.5 + corner_eps:
+            # Transition: v2 → v3
+            t = (tau_local - (0.5 - corner_eps)) / (2 * corner_eps)
+            vel = self.smooth_trans(vel_scale, v2, v3, t)
+        elif tau_local < 0.75 - corner_eps:
+            vel = vel_scale * v3
+        elif tau_local < 0.75 + corner_eps:
+            # Transition: v3 → v4
+            t = (tau_local - (0.75 - corner_eps)) / (2 * corner_eps)
+            vel = self.smooth_trans(vel_scale, v3, v4, t)
+        else:
+            if tau_local < 1.0 - corner_eps:
+                vel = vel_scale * v4
+            else:
+                # Transition: v4 → v1 (wrap-around)
+                t = (tau_local - (1.0 - corner_eps)) / (2 * corner_eps)
+                # For wrap-around, interpolate v4 to v1
+                vel = self.smooth_trans(vel_scale, v4, v1, t)
+        return vel
+    
+    def ddf(self, tau):
+        return np.zeros(3)
+
+class SpiralSearchPattern(SearchPattern):
+    def __init__(self, params, vel_norm=1.0, dt=0.01):
+        super().__init__(params, vel_norm=vel_norm, dt=dt)
+        # params[0, 0] Max Radius; params[0, 1] Rotation Speed; params[1, :] Centerpoint
+
+    def f(self, tau):
+        return (
+            self.params[1,:] + self.params[0, 0] * tau * 
+            np.array([np.cos(2 * np.pi * self.params[0, 1] * tau),
+                      np.sin(2 * np.pi * self.params[0, 1] * tau), 0])
+            )
+
+    def df(self, tau):
+        return (
+            self.params[0, 0] * 
+            np.array([np.cos(2 * np.pi * self.params[0, 1] * tau) - 2 * np.pi * self.params[0, 1] * tau * np.sin(2 * np.pi * self.params[0, 1] * tau),
+                      np.sin(2 * np.pi * self.params[0, 1] * tau) + 2 * np.pi * self.params[0, 1] * tau * np.cos(2 * np.pi * self.params[0, 1] * tau),
+                      0])
+        )
+
+    def ddf(self, tau):
+        return (4 * np.pi * self.params[0, 0] * self.params[0, 1] *
+            np.array([-np.sin(2 * np.pi * tau * self.params[0, 1]) - np.pi * tau * self.params[0, 1] * np.cos(2 * np.pi * tau * self.params[0, 1]),
+                       np.cos(2 * np.pi * tau * self.params[0, 1]) - np.pi * tau * self.params[0, 1] * np.sin(2 * np.pi * tau * self.params[0, 1]),
+                      0])
+
+        )
+
 class CompositeSearchPattern(SearchPattern):
     def __init__(self, patterns, vel_norm=1.0, dt=0.01):
         self.patterns = patterns
