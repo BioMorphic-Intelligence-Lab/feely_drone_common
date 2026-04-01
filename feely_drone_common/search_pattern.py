@@ -136,6 +136,17 @@ class LinearSearchPattern(SearchPattern):
     def ddf(self, tau):
         return 0
 
+    def flip_direction(self):
+        """Reverse the traversal direction so that the old endpoint becomes the
+        new start point (tau=0). After this call the drone, which is near f(1)
+        of the previous pass, will project to tau≈0 on the new path, allowing
+        find_nearest_tau to restart naturally from the beginning."""
+        # Move the offset to the old end-point: new f(0) = old f(1)
+        self.params[1, :] = self.params[1, :] + self.params[0, :]
+        # Negate the slope so the path is traversed in the opposite direction
+        self.params[0, :] = -self.params[0, :]
+        self.traj_dis = np.array([self.f(tau) for tau in self.tau_dis])
+
 class SinusoidalSearchPattern(SearchPattern):
     def __init__(self, params, vel_norm=1.0, dt=0.01):
         super().__init__(params, vel_norm=vel_norm, dt=dt)

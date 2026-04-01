@@ -169,13 +169,16 @@ class StateMachine(object):
         # at the peaks of the searching pattern, i.e. tau = 0.125, 0.25, 0.375, 0.75
         self.alpha = (1 - (0.25 * np.sin(4 *  2 * np.pi * self.tau_min  + np.pi/2) + 0.25)) * np.ones(3)
 
-        # If we're close to completing a full cycle
-        if  self.tau_min > 0.99:   # tolerance band near 1
+        # If we're close to completing a full cycle, step up and reverse
+        if self.tau_min > 0.99:
             self.searching_pattern.step_height(0.075)
             self.target_pos_estimate[2] += 0.075
-            self.tau_min = -1.0
-            # Reset init_tau so we don't immediately retrigger
-
+            # For open (non-closed) paths, flip the traversal direction so the
+            # drone's current position (near old f(1)) maps to tau≈0 on the
+            # new path.  The brute-force nearest-point search (triggered by
+            # tau_min=-1) will then correctly restart from the beginning.
+            if hasattr(self.searching_pattern, 'flip_direction'):
+                self.searching_pattern.flip_direction()
             self.tau_min = -1.0
 
         yaw_des = self.target_yaw_estimate
