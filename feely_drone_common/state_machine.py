@@ -136,9 +136,11 @@ class StateMachine(object):
 
         yaw_rate = np.sign(yaw_des - x[3]) * 0.1
         
-        if np.linalg.norm(dist) < 0.05:
-            v_des = 0.05 * np.append(dist, 0.0)
-        elif np.linalg.norm(dist) < 0.25:
+        if np.linalg.norm(dist) < 0.025:
+            v_des = np.zeros(4)
+        elif np.linalg.norm(dist) < 0.15:
+            v_des = 0.1 * np.append(dist, 0.0)
+        elif np.linalg.norm(dist) < 0.5:
             v_des = 0.25 * np.append(dist, 0.0)
         else:
             v_des = 0.5 * np.append(dist, yaw_rate)
