@@ -105,8 +105,12 @@ class SearchPattern(ABC):
         gradient = (np.exp(-distance_norm) * derivative
                     + kappa * distance_vector)
 
-        # Normalize and stretch according to velocity
-        return gradient / np.linalg.norm(gradient) * self.vel_norm, t_min
+        # Normalize if exceeding desired velocity and stretch according to velocity
+        norm = np.linalg.norm(gradient)
+        if norm > self.vel_norm:
+            return (gradient / norm * self.vel_norm, t_min)
+        else:
+            return (gradient, t_min)
 
     def get_ref_pos_vel(self, x, last_tau=-1):
         """
